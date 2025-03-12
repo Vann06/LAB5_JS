@@ -180,7 +180,7 @@ function crearPost(post){
     cardPost.appendChild(textCont);
     cardPost.appendChild(imgPost);
  
-    // Crear evento para hacerle click al post
+    // Crear listener para hacerle click al post
     cardPost.addEventListener("click", () => seleccionarPost(post.id));
 
     return cardPost; 
@@ -224,5 +224,29 @@ const postsFiltrados = posts.filter(post =>
 
 // Función para manejar la selección de un post
 function seleccionarPost(postId) {
-    // Lógica para manejar la selección de un post
+    const post = posts.find(p => p.id == postId); 
+    if (!post) return;
+
+    document.body.innerHTML = ""; 
+    DetallePost(post);
+}
+
+function DetallePost(post) {
+    // Create a container div for the detailed post view
+    
+    // Add styles to make it centered and visually appealing
+    
+    // Create an H1 element for the post title
+    
+    // Create an img element for the post image
+    
+    // Create a p element for the post description
+    
+    // Call the function to create the comments section
+    
+    // Create a button to go back to the main posts view
+    
+    // Append all elements to the container
+    
+    // Append the container to the document body
 }
