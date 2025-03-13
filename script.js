@@ -1,7 +1,7 @@
 
 
 
-let posts = []; // Global array for storing API data
+let posts = []; // arreglo global para los posts
 
 // Inicialización de la aplicación
 document.addEventListener("DOMContentLoaded", () => {
@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-// funcion para traer datos 
+// funcion para traer posts 
 function fetchPosts() {
     fetch('http://awita.site:3000/posts')
         .then(response => response.json()) 
@@ -220,7 +220,7 @@ const postsFiltrados = posts.filter(post =>
 );
 
 
-// ------------ 2NDA PAGINA -------------
+// ====================== 2NDA PAGINA ==========================
 
 // Función para manejar la selección de un post
 function seleccionarPost(postId) {
@@ -231,20 +231,43 @@ function seleccionarPost(postId) {
 }
 
 function DetallePost(post) {
+    document.body.innerHTML = ""; // limpiar todo
 
-    // Create a container div for the detailed pos(t view
+    // Contenedor para la información del post 
     const contenedor = document.createElement("div");
     contenedor.id = "detalle-contenedor";
     contenedor.style.width = "80%";
-    contenedor.style.margin = "50px auto";
+    contenedor.style.length = "400px";
+    contenedor.style.margin = "70px auto";
     contenedor.style.padding = "20px";
     contenedor.style.border = "1px solid #ddd";
     contenedor.style.borderRadius = "10px";
     contenedor.style.backgroundColor = "rgb(255, 255, 255)";
     contenedor.style.boxShadow = "0px 2px 6px rgba(0, 0, 0, 0.2)";
     contenedor.style.textAlign = "center";
-    
-    // Create an H1 element for the post title
+
+    // Botón para regresar
+    const backButton = document.createElement("button");
+    backButton.innerText = " Back";
+    backButton.style.padding = "10px 20px";
+    backButton.style.fontSize = "16px";
+    backButton.style.border = "none";
+    backButton.style.borderRadius = "5px";
+    backButton.style.backgroundColor = "#5ea868";
+    backButton.style.color = "white";
+    backButton.style.cursor = "pointer";
+    backButton.style.marginTop = "10px";
+    backButton.style.position = "absolute";
+    backButton.style.top = "10px";
+    backButton.style.left = "10px";
+     // Evento para regresar a la pantalla principal
+     backButton.addEventListener("click", () => {
+        document.body.innerHTML = "";
+        inicializarInterfaz();
+        renderizarPosts();
+    });
+
+    // Crear titulo
     const title = document.createElement("h1");
      title.innerText = post.titulo;
      title.style.fontSize = "26px";
@@ -253,12 +276,12 @@ function DetallePost(post) {
      title.style.marginRight = "60px"; 
      title.style.fontFamily = "FreeMono";
     
-    // Create an img element for the post image
+    // Create la imagen 
     const imgPost = document.createElement("img");
     imgPost.src = fixRedditImage(post.imagen);
     imgPost.alt = post.titulo;
-    imgPost.style.width = "160px";
-    imgPost.style.height = "120px";
+    imgPost.style.width = "400px";
+    imgPost.style.height = "250px";
     imgPost.style.borderRadius = "10px";
     imgPost.style.marginRight = " 35px";
     imgPost.style.border = "1pz solid black";
@@ -266,44 +289,105 @@ function DetallePost(post) {
     imgPost.style.left = "100%";
     imgPost.style.marginLeft = "auto"; // mandar la imagen hasta la derecha
 
-    // Create a p element for the post description
+    // descripcion del post como p
     const postDes = document.createElement("p");
     postDes.innerText = post.descripcion;
     postDes.style.color = "#555";
     postDes.style.fontSize = "18px";
 
-     // Botón para regresar
-     const backButton = document.createElement("button");
-     backButton.innerText = " Back";
-     backButton.style.padding = "10px 20px";
-     backButton.style.fontSize = "16px";
-     backButton.style.border = "none";
-     backButton.style.borderRadius = "5px";
-     backButton.style.backgroundColor = "#5ea868";
-     backButton.style.color = "white";
-     backButton.style.cursor = "pointer";
-     backButton.style.marginTop = "20px";
-
-     // Evento para regresar a la pantalla principal
-    backButton.addEventListener("click", () => {
-        document.body.innerHTML = "";
-        inicializarInterfaz();
-        renderizarPosts();
-    });
-
+    // Crear sección de comentarios
+    const commentsContainer = document.createElement("div");
+    commentsContainer.id = "comments-container";
+    commentsContainer.style.maxHeight = "300px";
+    commentsContainer.style.overflowY = "auto";
+    commentsContainer.style.borderTop = "1px solid #ddd";
+    commentsContainer.style.marginTop = "20px";
+    commentsContainer.style.paddingTop = "10px";
+    commentsContainer.style.textAlign = "left"; 
+    commentsContainer.style.padding = "10px";
+    commentsContainer.style.backgroundColor = "#f9f9f9";    
     
     // Agregar elementos al contenedor
     contenedor.appendChild(title);
     contenedor.appendChild(imgPost);
     contenedor.appendChild(postDes);
-    contenedor.appendChild(backButton);
+    contenedor.appendChild(commentsContainer);
+
 
     // Agregar contenedor al cuerpo de la página
     document.body.appendChild(contenedor);
+    document.body.appendChild(backButton);
+
+    //traer los comentarios del post especifico
+    fetchComments(post.id);
+}
+
+
+// funcion para traer comentarios 
+function fetchComments(postId) {
+    fetch(`http://awita.site:3000/comments/${postId}`)
+        .then(response => response.json()) 
+        .then(data => {
+            if (data.comments) { 
+                renderComments(data.comments);
+            } else {
+                console.error("Invalid API response:", data);
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching posts:", error);
+        });
+}
+
+// funcion para diseñar comentario 
+function createComment(comment){
+    const commentCont = document.createElement("div");
+    commentCont.style.padding = "10px";
+    commentCont.style.margin = "5px 0";
+    commentCont.style.borderBottom = "1px solid black";
+
+    // mostrar usuario y fecha
+    const username = document.createElement("p");
+    username.innerText = comment.username;
+    username.style.fontSize = "12px";
+    username.style.color = "#888";
+
+    // mostrar texto
+    const text = document.createElement("p");
+    text.innerText = comment.comentario;
+    text.style.margin = "5px 0";
+    
+
+    commentCont.appendChild(username);
+    commentCont.appendChild(text);
+    
+
+    return commentCont;
 }
 
 // funcion para generar los comentarios de un post especifico 
-function comments(post){
+function renderComments(comments){
+    //oootro contenedor
+    const commentsContainer = document.getElementById("comments-container");
+    if (!commentsContainer) return; // si existe 
+    commentsContainer.innerHTML = ""; 
+    
+    comments.forEach(comment => {
+        const commentCont = createComment(comment);
+        commentsContainer.appendChild(commentCont);
+    });
+      
+    // Preserve scroll position
+    commentsContainer.scrollTop = commentsContainer.scrollHeight;
 
+    document.body.appendChild(commentCard);
+
+}
+
+function commentInput(postId){
+
+}
+
+function addComment(){
 
 }
