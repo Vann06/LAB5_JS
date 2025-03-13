@@ -1,50 +1,38 @@
 
-// crear datos dummy
-const posts = [
-    {
-        "imagen": "https://cdn2.thecatapi.com/images/MTY3ODIyMQ.jpg",
-        "titulo": "Sleepy Cat",
-        "descripcion": "This adorable kitty loves to sleep all day! ",
-        "id": 1
-    },
-    {
-        "imagen": "https://cdn2.thecatapi.com/images/0XYvRd7oD.jpg",
-        "titulo": "Curious Kitten",
-        "descripcion": "Always wondering about the world... ",
-        "id": 2
-    },
-    {
-        "imagen": "https://cdn2.thecatapi.com/images/b6d.jpg",
-        "titulo": "Majestic Cat",
-        "descripcion": "A true feline king ruling over its kingdom! ",
-        "id": 3
-    },
-    {
-        "imagen": "https://cdn2.thecatapi.com/images/c5d.jpg",
-        "titulo": "Playful Kitty",
-        "descripcion": "Loves to play with anything that moves! ",
-        "id": 4
-    },
-    {
-        "imagen": "https://cdn2.thecatapi.com/images/d5e.jpg",
-        "titulo": "Fluffy Cat",
-        "descripcion": "The fluffiest cat you’ll ever see! ",
-        "id": 5
-    }
-];
+
+
+let posts = []; // Global array for storing API data
 
 // Inicialización de la aplicación
 document.addEventListener("DOMContentLoaded", () => {
     inicializarInterfaz();
     agregarEventos();
-    renderizarPosts();
+    fetchPosts();
 });
+
+
+// funcion para traer datos 
+function fetchPosts() {
+    fetch('http://awita.site:3000/posts')
+        .then(response => response.json()) 
+        .then(data => {
+            if (data.posts) { 
+                posts = data.posts;
+                renderizarPosts();
+            } else {
+                console.error("Invalid API response:", data);
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching posts:", error);
+        });
+}
+
 
 // Función para inicializar la interfaz
 function inicializarInterfaz() {
     crearContenedorPosts();
     crearBarraBusqueda();
-
 }
 
 // Función para agregar eventos
@@ -131,7 +119,7 @@ function crearPost(post){
     cardPost.className = "card-post";
     cardPost.style.display = "flex";
     cardPost.style.width = "90%";
-    cardPost.style.height = "130px";
+    cardPost.style.height = "auto";
     cardPost.style.alignItems = "center";
     cardPost.style.padding = "10px";
     cardPost.style.marginBottom = "10px";
@@ -143,7 +131,7 @@ function crearPost(post){
 
     // Imagen del post
     const imgPost = document.createElement("img");
-    imgPost.src = post.imagen;
+    imgPost.src = fixRedditImage(post.imagen);
     imgPost.alt = post.titulo;
     imgPost.style.width = "160px";
     imgPost.style.height = "120px";
@@ -151,6 +139,8 @@ function crearPost(post){
     imgPost.style.marginRight = " 35px";
     imgPost.style.border = "1pz solid black";
     imgPost.style.left = "100%";
+    imgPost.style.objectFit = "cover"; // Ensure image fits well
+    imgPost.style.display = "block"; // Ensure it doesn't break layout
     imgPost.style.marginLeft = "auto"; // mandar la imagen hasta la derecha
 
     // Crear nuevo contenedor para texto 
@@ -159,6 +149,8 @@ function crearPost(post){
     textCont.style.flexDirection = "column";
     textCont.style.textAlign = "left";
     textCont.style.width = "60%";
+    textCont.style.overflow = "hidden"; 
+
 
     // Titulo del post 
     const postTitle = document.createElement("h2");
@@ -168,6 +160,7 @@ function crearPost(post){
     postTitle.style.margin = "5px";
     postTitle.style.marginRight = "60px"; 
     postTitle.style.fontFamily = "FreeMono";
+
 
     // Descripcion del post
     const postDes = document.createElement("p");
@@ -186,11 +179,18 @@ function crearPost(post){
     return cardPost; 
 }
 
+function fixRedditImage(imageUrl) {
+    if (imageUrl.includes("reddit.com/media?url=")) {
+        return decodeURIComponent(imageUrl.split("url=")[1]); 
+    }
+    return imageUrl; 
+}
+
+
 // Función para renderizar posts
 function renderizarPosts(filtro = "") {
     const contenedor = document.getElementById("contenedor-posts");
     contenedor.innerHTML = ""; 
-
     // crear el filtro con respecto al titulo 
     const postsFilter = posts.filter(post =>
         post.titulo.toLowerCase().includes(filtro.toLowerCase())
@@ -226,27 +226,84 @@ const postsFiltrados = posts.filter(post =>
 function seleccionarPost(postId) {
     const post = posts.find(p => p.id == postId); 
     if (!post) return;
-
     document.body.innerHTML = ""; 
     DetallePost(post);
 }
 
 function DetallePost(post) {
-    // Create a container div for the detailed post view
-    
-    // Add styles to make it centered and visually appealing
+
+    // Create a container div for the detailed pos(t view
+    const contenedor = document.createElement("div");
+    contenedor.id = "detalle-contenedor";
+    contenedor.style.width = "80%";
+    contenedor.style.margin = "50px auto";
+    contenedor.style.padding = "20px";
+    contenedor.style.border = "1px solid #ddd";
+    contenedor.style.borderRadius = "10px";
+    contenedor.style.backgroundColor = "rgb(255, 255, 255)";
+    contenedor.style.boxShadow = "0px 2px 6px rgba(0, 0, 0, 0.2)";
+    contenedor.style.textAlign = "center";
     
     // Create an H1 element for the post title
+    const title = document.createElement("h1");
+     title.innerText = post.titulo;
+     title.style.fontSize = "26px";
+     title.style.color = "#333";
+     title.style.margin = "5px";
+     title.style.marginRight = "60px"; 
+     title.style.fontFamily = "FreeMono";
     
     // Create an img element for the post image
-    
+    const imgPost = document.createElement("img");
+    imgPost.src = fixRedditImage(post.imagen);
+    imgPost.alt = post.titulo;
+    imgPost.style.width = "160px";
+    imgPost.style.height = "120px";
+    imgPost.style.borderRadius = "10px";
+    imgPost.style.marginRight = " 35px";
+    imgPost.style.border = "1pz solid black";
+    imgPost.style.objectFit = "cover";
+    imgPost.style.left = "100%";
+    imgPost.style.marginLeft = "auto"; // mandar la imagen hasta la derecha
+
     // Create a p element for the post description
+    const postDes = document.createElement("p");
+    postDes.innerText = post.descripcion;
+    postDes.style.color = "#555";
+    postDes.style.fontSize = "18px";
+
+     // Botón para regresar
+     const backButton = document.createElement("button");
+     backButton.innerText = " Back";
+     backButton.style.padding = "10px 20px";
+     backButton.style.fontSize = "16px";
+     backButton.style.border = "none";
+     backButton.style.borderRadius = "5px";
+     backButton.style.backgroundColor = "#5ea868";
+     backButton.style.color = "white";
+     backButton.style.cursor = "pointer";
+     backButton.style.marginTop = "20px";
+
+     // Evento para regresar a la pantalla principal
+    backButton.addEventListener("click", () => {
+        document.body.innerHTML = "";
+        inicializarInterfaz();
+        renderizarPosts();
+    });
+
     
-    // Call the function to create the comments section
-    
-    // Create a button to go back to the main posts view
-    
-    // Append all elements to the container
-    
-    // Append the container to the document body
+    // Agregar elementos al contenedor
+    contenedor.appendChild(title);
+    contenedor.appendChild(imgPost);
+    contenedor.appendChild(postDes);
+    contenedor.appendChild(backButton);
+
+    // Agregar contenedor al cuerpo de la página
+    document.body.appendChild(contenedor);
+}
+
+// funcion para generar los comentarios de un post especifico 
+function comments(post){
+
+
 }
