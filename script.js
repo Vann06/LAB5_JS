@@ -179,6 +179,7 @@ function crearPost(post){
     return cardPost; 
 }
 
+// funcion para identificar la imagen desde reddit 
 function fixRedditImage(imageUrl) {
     if (imageUrl.includes("reddit.com/media?url=")) {
         return decodeURIComponent(imageUrl.split("url=")[1]); 
@@ -385,9 +386,12 @@ function renderComments(comments){
 }
 
 function commentInput(postId){
+    const inputCont = document.createElement("div");
+    
 
 }
 
 function addComment(){
+
 
 }
