@@ -1,6 +1,4 @@
 
-
-
 let posts = []; // arreglo global para los posts
 
 // Inicialización de la aplicación
@@ -9,7 +7,6 @@ document.addEventListener("DOMContentLoaded", () => {
     agregarEventos();
     fetchPosts();
 });
-
 
 // funcion para traer posts 
 function fetchPosts() {
@@ -194,8 +191,9 @@ function renderizarPosts(filtro = "") {
     contenedor.innerHTML = ""; 
     // crear el filtro con respecto al titulo 
     const postsFilter = posts.filter(post =>
-        post.titulo.toLowerCase().includes(filtro.toLowerCase())
-    )
+        post.titulo.toLowerCase().includes(filtro.toLowerCase()) ||
+        post.descripcion.toLowerCase().includes(filtro.toLowerCase()) 
+    );
 
     // Lógica para mostrar los posts filtrados
     if (postsFilter.length > 0){
@@ -232,13 +230,12 @@ function seleccionarPost(postId) {
 }
 
 function DetallePost(post) {
-    document.body.innerHTML = ""; // limpiar todo
+    document.body.innerHTML = ""; // Limpiar pantalla
 
-    // Contenedor para la información del post 
+    // Contenedor principal del post
     const contenedor = document.createElement("div");
     contenedor.id = "detalle-contenedor";
     contenedor.style.width = "80%";
-    contenedor.style.length = "400px";
     contenedor.style.margin = "70px auto";
     contenedor.style.padding = "20px";
     contenedor.style.border = "1px solid #ddd";
@@ -261,8 +258,7 @@ function DetallePost(post) {
     backButton.style.position = "absolute";
     backButton.style.top = "10px";
     backButton.style.left = "10px";
-     // Evento para regresar a la pantalla principal
-     backButton.addEventListener("click", () => {
+    backButton.addEventListener("click", () => {
         document.body.innerHTML = "";
         inicializarInterfaz();
         renderizarPosts();
@@ -270,61 +266,65 @@ function DetallePost(post) {
 
     // Crear titulo
     const title = document.createElement("h1");
-     title.innerText = post.titulo;
-     title.style.fontSize = "26px";
-     title.style.color = "#333";
-     title.style.margin = "5px";
-     title.style.marginRight = "60px"; 
-     title.style.fontFamily = "FreeMono";
+    title.innerText = post.titulo;
+    title.style.fontSize = "26px";
+    title.style.color = "#333";
+    title.style.margin = "5px";
+    title.style.fontFamily = "FreeMono";
     
-    // Create la imagen 
+    // Imagen del post
     const imgPost = document.createElement("img");
     imgPost.src = fixRedditImage(post.imagen);
     imgPost.alt = post.titulo;
     imgPost.style.width = "400px";
     imgPost.style.height = "250px";
     imgPost.style.borderRadius = "10px";
-    imgPost.style.marginRight = " 35px";
-    imgPost.style.border = "1pz solid black";
     imgPost.style.objectFit = "cover";
-    imgPost.style.left = "100%";
-    imgPost.style.marginLeft = "auto"; // mandar la imagen hasta la derecha
 
-    // descripcion del post como p
     const postDes = document.createElement("p");
     postDes.innerText = post.descripcion;
     postDes.style.color = "#555";
     postDes.style.fontSize = "18px";
 
-    // Crear sección de comentarios
+    // Contenedor para escribir comentarios 
+    const writeCommentsCont = document.createElement("div");
+    writeCommentsCont.id = "write-comments-container";
+    writeCommentsCont.style.padding = "10px";
+    writeCommentsCont.style.marginBottom = "20px";
+    writeCommentsCont.style.border = "2px solid #5ea868";
+    writeCommentsCont.style.borderRadius = "5px";
+    writeCommentsCont.style.backgroundColor = "#e0f7e9";
+
+    // Contenedor de comentarios antiguos
     const commentsContainer = document.createElement("div");
     commentsContainer.id = "comments-container";
+    commentsContainer.style.margin = "0 auto"; 
     commentsContainer.style.maxHeight = "300px";
     commentsContainer.style.overflowY = "auto";
+    commentsContainer.style.border = "2px solid #5ea868";
     commentsContainer.style.borderTop = "1px solid #ddd";
-    commentsContainer.style.marginTop = "20px";
-    commentsContainer.style.paddingTop = "10px";
-    commentsContainer.style.textAlign = "left"; 
     commentsContainer.style.padding = "10px";
-    commentsContainer.style.backgroundColor = "#f9f9f9";    
-    
-    // Agregar elementos al contenedor
+    commentsContainer.style.backgroundColor = "#e0f7e9";
+
+    // Agregar elementos al contenedor principal
     contenedor.appendChild(title);
     contenedor.appendChild(imgPost);
     contenedor.appendChild(postDes);
+    contenedor.appendChild(writeCommentsCont); 
     contenedor.appendChild(commentsContainer);
 
-
-    // Agregar contenedor al cuerpo de la página
+    // Agregar contenedor a la pagina
     document.body.appendChild(contenedor);
     document.body.appendChild(backButton);
 
-    //traer los comentarios del post especifico
+    // Agregar input para comentarios 
+    commentInput(post.id);
+
+    // Traer los comentarios del post
     fetchComments(post.id);
 }
 
-
-// funcion para traer comentarios 
+// Funcion para obtener comentarios 
 function fetchComments(postId) {
     fetch(`http://awita.site:3000/comments/${postId}`)
         .then(response => response.json()) 
@@ -336,62 +336,95 @@ function fetchComments(postId) {
             }
         })
         .catch(error => {
-            console.error("Error fetching posts:", error);
+            console.error("Error fetching comments:", error);
         });
 }
 
-// funcion para diseñar comentario 
-function createComment(comment){
-    const commentCont = document.createElement("div");
-    commentCont.style.padding = "10px";
-    commentCont.style.margin = "5px 0";
-    commentCont.style.borderBottom = "1px solid black";
-
-    // mostrar usuario y fecha
-    const username = document.createElement("p");
-    username.innerText = comment.username;
-    username.style.fontSize = "12px";
-    username.style.color = "#888";
-
-    // mostrar texto
-    const text = document.createElement("p");
-    text.innerText = comment.comentario;
-    text.style.margin = "5px 0";
-    
-
-    commentCont.appendChild(username);
-    commentCont.appendChild(text);
-    
-
-    return commentCont;
-}
-
-// funcion para generar los comentarios de un post especifico 
-function renderComments(comments){
-    //oootro contenedor
+// Renderizar comentarios antiguos
+function renderComments(comments) {
     const commentsContainer = document.getElementById("comments-container");
-    if (!commentsContainer) return; // si existe 
+    if (!commentsContainer) return;
+
     commentsContainer.innerHTML = ""; 
-    
+
     comments.forEach(comment => {
         const commentCont = createComment(comment);
         commentsContainer.appendChild(commentCont);
     });
-      
-    // Preserve scroll position
-    commentsContainer.scrollTop = commentsContainer.scrollHeight;
 
-    document.body.appendChild(commentCard);
-
+    commentsContainer.scrollTop = 0;
 }
 
-function commentInput(postId){
+// Renderizar nuevos comentarios en el contenedor superior
+function renderWriteComment(comment) {
+    const writeCommentsContainer = document.getElementById("write-comments-container");
+    if (!writeCommentsContainer) return;
+
+    const commentCont = createComment(comment);
+    writeCommentsContainer.prepend(commentCont); 
+}
+
+// Crear un comentario visualmente
+function createComment(comment) {
+    const commentCont = document.createElement("div");
+    commentCont.style.borderBottom = "1px solid black";
+    commentCont.style.backgroundColor = "#f0f0f0";
+    commentCont.style.borderRadius = "5px";
+
+    const username = document.createElement("p");
+    username.innerText = comment.username || "23201"; //Comentar con mi carnet
+    username.style.fontSize = "12px";
+    username.style.color = "#888";
+    username.style.fontWeight = "bold";
+
+    const text = document.createElement("p");
+    text.innerText = comment.comentario;
+
+    commentCont.appendChild(username);
+    commentCont.appendChild(text);
+
+    return commentCont;
+}
+
+// Input para escribir un comentario 
+function commentInput(postId) {
     const inputCont = document.createElement("div");
-    
+    inputCont.style.display = "flex";
+    inputCont.style.flexDirection = "column";
+    inputCont.style.marginBottom = "10px";
 
+    const commentInput = document.createElement("textarea");
+    commentInput.id = "comment-text";
+    commentInput.placeholder = "Write a comment...";
+    commentInput.style.width = "100%";
+    commentInput.style.height = "50px";
+    commentInput.style.padding = "5px";
+    commentInput.style.border = "1px solid #ddd";
+
+    const sendButton = document.createElement("button");
+    sendButton.innerText = "Add Comment";
+    sendButton.style.marginTop = "5px";
+    sendButton.style.padding = "8px";
+    sendButton.style.backgroundColor = "#5ea868";
+    sendButton.style.color = "white";
+    sendButton.style.border = "none";
+    sendButton.style.borderRadius = "5px";
+    sendButton.style.cursor = "pointer";
+    sendButton.addEventListener("click", () => addComment(postId));
+
+    inputCont.appendChild(commentInput);
+    inputCont.appendChild(sendButton);
+
+    document.getElementById("write-comments-container").appendChild(inputCont);
 }
 
-function addComment(){
+// Función para agregar comentario
+function addComment(postId) {
+    const commentText = document.getElementById("comment-text").value.trim();
+    if (commentText === "") return;
 
+    const newComment = { postId, username: "23201", comentario: commentText };
 
+    renderWriteComment(postId, newComment);
+    document.getElementById("comment-text").value = "";
 }
