@@ -128,7 +128,7 @@ function crearPost(post){
 
     // Imagen del post
     const imgPost = document.createElement("img");
-    imgPost.src = fixRedditImage(post.imagen);
+    imgPost.src = post.imagen;
     imgPost.alt = post.titulo;
     imgPost.style.width = "160px";
     imgPost.style.height = "120px";
@@ -136,8 +136,8 @@ function crearPost(post){
     imgPost.style.marginRight = " 35px";
     imgPost.style.border = "1pz solid black";
     imgPost.style.left = "100%";
-    imgPost.style.objectFit = "cover"; // Ensure image fits well
-    imgPost.style.display = "block"; // Ensure it doesn't break layout
+    imgPost.style.objectFit = "cover"; 
+    imgPost.style.display = "block"; 
     imgPost.style.marginLeft = "auto"; // mandar la imagen hasta la derecha
 
     // Crear nuevo contenedor para texto 
@@ -175,15 +175,6 @@ function crearPost(post){
 
     return cardPost; 
 }
-
-// funcion para identificar la imagen desde reddit 
-function fixRedditImage(imageUrl) {
-    if (imageUrl.includes("reddit.com/media?url=")) {
-        return decodeURIComponent(imageUrl.split("url=")[1]); 
-    }
-    return imageUrl; 
-}
-
 
 // Función para renderizar posts
 function renderizarPosts(filtro = "") {
@@ -274,7 +265,7 @@ function DetallePost(post) {
     
     // Imagen del post
     const imgPost = document.createElement("img");
-    imgPost.src = fixRedditImage(post.imagen);
+    imgPost.src = post.imagen;
     imgPost.alt = post.titulo;
     imgPost.style.width = "400px";
     imgPost.style.height = "250px";
@@ -330,7 +321,13 @@ function fetchComments(postId) {
         .then(response => response.json()) 
         .then(data => {
             if (data.comments) { 
+                const commentsContainer = document.getElementById("comments-container");
+                const scrollBottom = commentsContainer.scrollHeight - commentsContainer.scrollTop === commentsContainer.clientHeight;
+
                 renderComments(data.comments);
+                if (scrollBottom) {
+                commentsContainer.scrollTop = commentsContainer.scrollHeight;
+            }
             } else {
                 console.error("Invalid API response:", data);
             }
@@ -352,16 +349,8 @@ function renderComments(comments) {
         commentsContainer.appendChild(commentCont);
     });
 
-    commentsContainer.scrollTop = 0;
-}
+    commentsContainer.scrollTop = commentsContainer.scrollHeight; 
 
-// Renderizar nuevos comentarios en el contenedor superior
-function renderWriteComment(comment) {
-    const writeCommentsContainer = document.getElementById("write-comments-container");
-    if (!writeCommentsContainer) return;
-
-    const commentCont = createComment(comment);
-    writeCommentsContainer.prepend(commentCont); 
 }
 
 // Crear un comentario visualmente
@@ -400,6 +389,15 @@ function commentInput(postId) {
     commentInput.style.height = "50px";
     commentInput.style.padding = "5px";
     commentInput.style.border = "1px solid #ddd";
+    commentInput.maxLength = 140; // Limite de 140
+
+    //Para darle click con el Enter
+    commentInput.addEventListener("keypress", function(event) {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            addComment(postId);
+        }
+    });
 
     const sendButton = document.createElement("button");
     sendButton.innerText = "Add Comment";
@@ -418,13 +416,50 @@ function commentInput(postId) {
     document.getElementById("write-comments-container").appendChild(inputCont);
 }
 
-// Función para agregar comentario
+
+// Función para agregar comentario y enviarlo a la API
 function addComment(postId) {
     const commentText = document.getElementById("comment-text").value.trim();
     if (commentText === "") return;
 
-    const newComment = { postId, username: "23201", comentario: commentText };
+    const newComment = { post_id: postId, username: "23201", comentario: commentText };
+    console.log("Enviando comentario:", newComment);
 
-    renderWriteComment(postId, newComment);
-    document.getElementById("comment-text").value = "";
+    // Enviar comentario a la API
+    fetch("http://awita.site:3000/comment", { 
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        },
+        body: JSON.stringify(newComment),
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Estado: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log("Comentario agregado con éxito:", data);
+        document.getElementById("comment-text").value = "";
+        fetchComments(postId);
+        
+        // Mantener scroll en la parte inferior
+        const commentsContainer = document.getElementById("comments-container");
+        if (commentsContainer) {
+            commentsContainer.scrollTop = commentsContainer.scrollHeight;
+        }
+    })
+    .catch(error => {
+        console.error("Error al enviar comentario:", error);
+    });
 }
+
+// Refrescar cada 5s para actualizarlo bien 
+setInterval(() => {
+    const postId = document.getElementById("comment-text")?.getAttribute("data-post-id");
+    if (postId) {
+        fetchComments(postId);
+    }
+}, 5000);
